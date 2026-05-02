@@ -1,54 +1,67 @@
 package com.podconnect.app;
 
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class JobQueue extends SQLiteOpenHelper {
+public class JobQueue {
 
-    private static final String DB_NAME = "jobs.db";
-    private static final int DB_VERSION = 1;
+    private final BlockingQueue<Job> queue = new LinkedBlockingQueue<>();
+    private final MessageSender sender;
 
-    public JobQueue(Context context) {
-        super(context, DB_NAME, null, DB_VERSION);
+    private volatile boolean running = false;
+    private Thread worker;
+
+    public JobQueue(MessageSender sender) {
+        this.sender = sender;
     }
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL(
-                "CREATE TABLE jobs (" +
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "phone TEXT," +
-                        "message TEXT," +
-                        "status INTEGER DEFAULT 0)"
-        );
-    }
+    public synchronized void start() {
+        if (running) return;
 
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
+        running = true;
 
-    public void processJobs() {
-        SQLiteDatabase db = getWritableDatabase();
+        worker = new Thread(() -> {
+            while (running || !queue.isEmpty()) {
+                try {
+                    Job job = queue.take();
+                    sender.send(job.phone, job.message);
 
-        Cursor cursor = db.rawQuery(
-                "SELECT id, phone, message FROM jobs WHERE status=0",
-                null
-        );
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
 
-        while (cursor.moveToNext()) {
-            int id = cursor.getInt(0);
-            String phone = cursor.getString(1);
-            String message = cursor.getString(2);
-
-            try {
-                WhatsAppDriver.send(phone, message);
-                db.execSQL("UPDATE jobs SET status=1 WHERE id=" + id);
-            } catch (Exception e) {
-                db.execSQL("UPDATE jobs SET status=2 WHERE id=" + id);
+                } catch (Exception e) {
+                    // Prevent worker crash
+                    e.printStackTrace();
+                }
             }
-        }
+        }, "JobQueue-Worker");
 
-        cursor.close();
+        worker.start();
+    }
+
+    public synchronized void stop() {
+        running = false;
+
+        if (worker != null) {
+            worker.interrupt();
+        }
+    }
+
+    public void enqueue(String phone, String message) {
+        if (!running) {
+            throw new IllegalStateException("JobQueue not started");
+        }
+        queue.offer(new Job(phone, message));
+    }
+
+    private static class Job {
+        final String phone;
+        final String message;
+
+        Job(String phone, String message) {
+            this.phone = phone;
+            this.message = message;
+        }
     }
 }
