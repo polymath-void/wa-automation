@@ -7,6 +7,7 @@ import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
 
+
 public class WhatsAppDriver {
 
     public static void send(String phone, String message) throws Exception {
@@ -38,5 +39,9 @@ public class WhatsAppDriver {
                 device.pressEnter();
             }
         }
+    }
+    
+    public void openChat(String number, String message) {
+        // implementation
     }
 }
