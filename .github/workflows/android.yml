@@ -18,9 +18,6 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       # ---- HARD PIN SDK (IMPORTANT FOR STABILITY) ----
       - name: Install Android SDK components
         run: |
