@@ -1,4 +1,4 @@
-name: Android CI
+name: Android Build
 
 on:
   push:
@@ -12,23 +12,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      - name: Install system certificates
+        run: sudo apt-get update && sudo apt-get install -y ca-certificates
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Accept licenses
+      - name: Accept SDK licenses
         run: yes | sdkmanager --licenses || true
 
-      - name: Build Debug APK
+      - name: Build APK
         run: ./gradlew clean assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: debug-apk
           path: app/build/outputs/apk/debug/*.apk
