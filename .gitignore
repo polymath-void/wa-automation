@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local SDK
+local.properties
+android-sdk/
+*.iml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# IntelliJ/Android Studio
+.idea/
+
+# Keystore (IMPORTANT)
+*.jks
+*.keystore

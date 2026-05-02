@@ -1,0 +1,22 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace "com.podconnect.app"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.podconnect.app"
+        minSdk 26
+        targetSdk 34
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+}
+
+dependencies {
+    implementation "androidx.test.uiautomator:uiautomator:2.3.0"
+    implementation "androidx.test:runner:1.5.2"
+    implementation "androidx.test:core:1.5.0"
+}
